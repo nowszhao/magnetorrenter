@@ -1,4 +1,4 @@
-# iMagnetRest - 强大的Torrent下载管理器
+# magnetorrenter - 强大的Torrent下载管理器
 
 一个使用Go语言开发的HTTP服务器，支持多种torrent下载方式和视频实时播放功能。
 
@@ -40,7 +40,7 @@
 1. **克隆项目**
 ```bash
 git clone <repository-url>
-cd iMagnetRest
+cd magnetorrenter
 ```
 
 2. **安装依赖**
@@ -136,7 +136,7 @@ curl -X POST http://localhost:8080/upload \
 ## 📁 项目结构
 
 ```
-iMagnetRest/
+magnetorrenter/
 ├── main.go                    # 主程序和路由设置
 ├── simple_torrent_service.go  # Torrent服务核心逻辑
 ├── stream_handler.go          # 视频流处理器
