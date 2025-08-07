@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放器 - iMagnetRest</title>
+    
+    <!-- Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: white;
+            overflow: hidden;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            transition: background 0.3s;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            z-index: 100;
+        }
+
+        .error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #ff6b6b;
+            z-index: 100;
+        }
+
+        .error button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #4facfe;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Video.js 自定义样式 */
+        .video-js {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .video-js .vjs-big-play-button {
+            font-size: 3em;
+            line-height: 1.5em;
+            height: 1.5em;
+            width: 3em;
+            border-radius: 50%;
+            background-color: rgba(43, 51, 63, 0.7);
+            border: 0.1em solid #fff;
+            color: #fff;
+        }
+
+        .video-js .vjs-control-bar {
+            background: rgba(43, 51, 63, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .video-js .vjs-progress-control .vjs-progress-holder {
+            height: 0.5em;
+        }
+
+        .video-js .vjs-progress-control .vjs-play-progress {
+            background-color: #4facfe;
+        }
+
+        .video-js .vjs-volume-level {
+            background-color: #4facfe;
+        }
+
+        /* 隐藏默认控件，使用Video.js控件 */
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="video-container">
+        <button class="back-btn" onclick="goBack()">← 返回</button>
+        
+        <div class="info" id="videoInfo">
+            <div id="fileName">加载中...</div>
+            <div id="downloadStatus" style="font-size: 12px; opacity: 0.8; margin-top: 5px;"></div>
+        </div>
+
+        <div class="loading" id="loading">正在加载视频...</div>
+        <div class="error" id="error" style="display: none;">
+            <h3>播放失败</h3>
+            <p id="errorMessage">视频文件可能还在下载中，请稍后再试</p>
+            <button onclick="location.reload()">重新加载</button>
+        </div>
+
+        <!-- Video.js 播放器 -->
+        <video
+            id="videoPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+            data-setup="{}"
+            style="display: none;">
+            <p class="vjs-no-js">
+                要查看此视频，请启用 JavaScript，并考虑升级到
+                <a href="https://videojs.com/html5-video-support/" target="_blank">
+                    支持HTML5视频的Web浏览器
+                </a>。
+            </p>
+        </video>
+    </div>
+
+    <!-- Video.js JavaScript -->
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+
+    <script>
+        let player;
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const fileName = document.getElementById('fileName');
+        const downloadStatus = document.getElementById('downloadStatus');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // 获取URL参数，处理双重编码的中文文件名
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedVideoFile = urlParams.get('file');
+        const videoFile = encodedVideoFile ? decodeURIComponent(decodeURIComponent(encodedVideoFile)) : null;
+
+        if (!videoFile) {
+            showError('未指定视频文件');
+        } else {
+            loadVideo();
+        }
+
+        // 加载视频
+        function loadVideo() {
+            fileName.textContent = videoFile;
+            // 使用正确的路径编码，支持中文和空格
+            const streamUrl = `/stream/${videoFile.split('/').map(part => encodeURIComponent(part)).join('/')}`;
+            console.log('视频流URL:', streamUrl);
+            console.log('原始文件路径:', videoFile);
+
+            // 初始化 Video.js 播放器
+            player = videojs('videoPlayer', {
+                fluid: true,
+                responsive: true,
+                playbackRates: [0.5, 1, 1.25, 1.5, 2],
+                controls: true,
+                preload: 'auto',
+                sources: [{
+                    src: streamUrl,
+                    type: 'video/mp4'
+                }],
+                html5: {
+                    vhs: {
+                        overrideNative: true
+                    },
+                    nativeVideoTracks: false,
+                    nativeAudioTracks: false,
+                    nativeTextTracks: false
+                }
+            });
+
+            // 播放器事件监听
+            player.ready(() => {
+                console.log('Video.js 播放器已准备就绪');
+                loading.style.display = 'none';
+                document.getElementById('videoPlayer').style.display = 'block';
+                updateDownloadStatus();
+            });
+
+            player.on('loadstart', () => {
+                console.log('开始加载视频...');
+                loading.style.display = 'block';
+            });
+
+            player.on('canplay', () => {
+                console.log('视频可以播放');
+                loading.style.display = 'none';
+            });
+
+            player.on('error', (e) => {
+                console.error('Video.js 播放错误:', e);
+                const error = player.error();
+                console.error('错误详情:', error);
+                showError(`视频播放失败: ${getVideoErrorMessage(error)}`);
+            });
+
+            player.on('loadeddata', () => {
+                console.log('视频数据已加载');
+            });
+
+            player.on('waiting', () => {
+                console.log('视频缓冲中...');
+            });
+
+            player.on('stalled', () => {
+                console.log('视频加载停滞');
+            });
+
+            // 添加超时检测
+            setTimeout(() => {
+                if (loading.style.display !== 'none') {
+                    console.error('视频加载超时');
+                    showError('视频加载超时，请检查文件是否存在或正在下载中');
+                }
+            }, 15000); // 15秒超时
+
+            // 定期更新下载状态
+            setInterval(updateDownloadStatus, 5000);
+        }
+
+        // 更新下载状态
+        async function updateDownloadStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                if (data.torrents && data.torrents.length > 0) {
+                    const torrent = data.torrents.find(t => 
+                        t.name && videoFile.includes(t.name.split('.')[0])
+                    );
+                    
+                    if (torrent) {
+                        const progress = Math.min(torrent.progress || 0, 100).toFixed(1);
+                        const downloaded = formatBytes(torrent.downloaded || 0);
+                        const total = formatBytes(torrent.total || 0);
+                        
+                        downloadStatus.textContent = `下载进度: ${progress}% (${downloaded}/${total})`;
+                        
+                        if (torrent.progress >= 1) {
+                            downloadStatus.textContent = '下载完成';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('获取下载状态失败:', error);
+            }
+        }
+
+        // 显示错误
+        function showError(message) {
+            loading.style.display = 'none';
+            error.style.display = 'block';
+            errorMessage.textContent = message;
+            console.error('播放器错误:', message);
+        }
+
+        // 获取视频错误信息
+        function getVideoErrorMessage(error) {
+            if (!error) return '未知错误';
+            
+            switch(error.code) {
+                case 1: return '视频加载被中止';
+                case 2: return '网络错误 - 请检查网络连接';
+                case 3: return '视频解码错误 - 文件可能损坏';
+                case 4: return '视频格式不支持或文件不存在';
+                default: return `错误代码: ${error.code} - ${error.message || '未知错误'}`;
+            }
+        }
+
+        // 返回
+        function goBack() {
+            if (player) {
+                player.dispose();
+            }
+            window.history.back();
+        }
+
+        // 格式化字节
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 页面卸载时清理播放器
+        window.addEventListener('beforeunload', () => {
+            if (player) {
+                player.dispose();
+            }
+        });
+
+        // 键盘快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (!player) return;
+            
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    if (player.paused()) {
+                        player.play();
+                    } else {
+                        player.pause();
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    player.currentTime(Math.max(0, player.currentTime() - 10));
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    player.currentTime(Math.min(player.duration(), player.currentTime() + 10));
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    player.volume(Math.min(1, player.volume() + 0.1));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    player.volume(Math.max(0, player.volume() - 0.1));
+                    break;
+                case 'KeyF':
+                    e.preventDefault();
+                    if (player.isFullscreen()) {
+                        player.exitFullscreen();
+                    } else {
+                        player.requestFullscreen();
+                    }
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    player.muted(!player.muted());
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

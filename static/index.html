@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>iMagnetRest - 磁力链接下载器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: clamp(14px, 2.5vw, 16px);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: clamp(14px, 2.5vw, 16px);
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: clamp(12px, 2vw, 14px);
+            border-radius: 20px;
+            min-height: 36px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .file-upload {
+            border: 2px dashed #4facfe;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(79, 172, 254, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        .file-upload:hover {
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload label {
+            cursor: pointer;
+            color: #4facfe;
+            font-weight: 500;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+        }
+
+        .status-container {
+            margin-top: 20px;
+        }
+
+        .torrent-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4facfe;
+        }
+
+        .torrent-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            word-break: break-word;
+        }
+
+        .torrent-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .progress-bar {
+            flex: 1;
+            min-width: 100px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: clamp(12px, 2vw, 14px);
+            color: #666;
+            min-width: 50px;
+        }
+
+        .torrent-info {
+            font-size: clamp(12px, 2vw, 14px);
+            color: #666;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .torrent-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .file-info {
+            margin-bottom: 10px;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            word-break: break-word;
+        }
+
+        .file-size {
+            font-size: clamp(12px, 2vw, 14px);
+            color: #666;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .empty-state img {
+            width: 60px;
+            height: 60px;
+            opacity: 0.5;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(79, 172, 254, 0.3);
+            border-radius: 50%;
+            border-top-color: #4facfe;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: clamp(14px, 2.5vw, 16px);
+            font-weight: 500;
+            transition: color 0.3s, border-bottom 0.3s;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .content {
+                padding: 10px;
+            }
+
+            .section {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            }
+
+            .file-item {
+                padding: 12px;
+            }
+
+            .torrent-item {
+                padding: 12px;
+            }
+
+            .file-actions {
+                justify-content: flex-start;
+            }
+
+            .torrent-actions {
+                justify-content: flex-start;
+            }
+
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .btn-small {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .tabs {
+                margin-bottom: 15px;
+            }
+
+            .tab {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .torrent-progress {
+                gap: 8px;
+            }
+
+            .torrent-info {
+                gap: 10px;
+            }
+        }
+
+        /* 小屏幕设备 */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .section h2 {
+                font-size: 1.2rem;
+            }
+
+            .file-actions,
+            .torrent-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 5px;
+            }
+
+            .btn-small {
+                width: auto;
+                display: inline-flex;
+            }
+
+            .torrent-progress {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+
+            .progress-text {
+                text-align: center;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .btn:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .btn:active {
+                transform: scale(0.98);
+            }
+
+            .file-upload:hover {
+                background: rgba(79, 172, 254, 0.05);
+            }
+        }
+
+        /* 横屏模式优化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .content {
+                padding: 10px;
+            }
+
+            .section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧲 iMagnetRest</h1>
+            <p>强大的磁力链接下载器 - 支持在线视频播放</p>
+        </div>
+
+        <div class="content">
+            <!-- 消息显示区域 -->
+            <div id="messageContainer"></div>
+
+            <!-- 标签页导航 -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('magnet')">🔗 磁力链接</button>
+                <button class="tab" onclick="switchTab('url')">🌐 Torrent URL</button>
+                <button class="tab" onclick="switchTab('upload')">📁 上传文件</button>
+            </div>
+
+            <!-- 磁力链接下载 -->
+            <div id="magnet-content" class="tab-content active">
+                <div class="section">
+                    <h2>🔗 磁力链接下载</h2>
+                    <div class="form-group">
+                        <label for="magnetUrl">磁力链接地址:</label>
+                        <input type="text" id="magnetUrl" class="form-control" 
+                               placeholder="magnet:?xt=urn:btih:..." 
+                               autocomplete="off">
+                    </div>
+                    <button class="btn" onclick="downloadMagnet()">
+                        <span>⬇️</span> 开始下载
+                    </button>
+                </div>
+            </div>
+
+            <!-- Torrent URL下载 -->
+            <div id="url-content" class="tab-content">
+                <div class="section">
+                    <h2>🌐 Torrent URL 下载</h2>
+                    <div class="form-group">
+                        <label for="torrentUrl">Torrent文件URL:</label>
+                        <input type="text" id="torrentUrl" class="form-control" 
+                               placeholder="https://example.com/file.torrent" 
+                               autocomplete="off">
+                    </div>
+                    <button class="btn" onclick="downloadTorrentUrl()">
+                        <span>⬇️</span> 开始下载
+                    </button>
+                </div>
+            </div>
+
+            <!-- 文件上传 -->
+            <div id="upload-content" class="tab-content">
+                <div class="section">
+                    <h2>📁 上传 Torrent 文件</h2>
+                    <div class="file-upload">
+                        <input type="file" id="torrentFile" accept=".torrent" onchange="handleFileSelect(event)">
+                        <label for="torrentFile">
+                            <div style="font-size: 2em; margin-bottom: 10px;">📁</div>
+                            <div>点击选择 .torrent 文件</div>
+                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">支持拖拽上传</div>
+                        </label>
+                    </div>
+                    <div id="uploadStatus" style="margin-top: 15px; display: none;">
+                        <div class="loading"></div>
+                        <span style="margin-left: 10px;">正在上传...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 下载状态 -->
+            <div class="section">
+                <h2>📊 下载状态</h2>
+                <div id="statusContainer" class="status-container">
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 15px;">📥</div>
+                        <p>暂无下载任务</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 正在下载的视频 -->
+            <div class="section">
+                <h2>🎬 正在下载的视频 (可边下载边播放)</h2>
+                <div id="downloadingVideosContainer">
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 15px;">🎥</div>
+                        <p>暂无正在下载的视频文件</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 已下载文件 -->
+            <div class="section">
+                <h2>📁 已下载文件</h2>
+                <div id="filesContainer">
+                    <div class="empty-state">
+                        <div style="font-size: 3em; margin-bottom: 15px;">📂</div>
+                        <p>暂无已下载文件</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let statusInterval;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFiles();
+            startStatusUpdates();
+            setupDragAndDrop();
+        });
+
+        // 标签页切换
+        function switchTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName + '-content').classList.add('active');
+            
+            // 激活选中的标签
+            event.target.classList.add('active');
+        }
+
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            // 3秒后自动移除消息
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // 下载磁力链接
+        async function downloadMagnet() {
+            const magnetUrl = document.getElementById('magnetUrl').value.trim();
+            
+            if (!magnetUrl) {
+                showMessage('请输入磁力链接地址', 'error');
+                return;
+            }
+            
+            if (!magnetUrl.startsWith('magnet:')) {
+                showMessage('请输入有效的磁力链接', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        magnet_url: magnetUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('开始下载磁力链接', 'success');
+                    document.getElementById('magnetUrl').value = '';
+                } else {
+                    showMessage(data.error || '下载失败', 'error');
+                }
+            } catch (error) {
+                console.error('下载错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 下载Torrent URL
+        async function downloadTorrentUrl() {
+            const torrentUrl = document.getElementById('torrentUrl').value.trim();
+            
+            if (!torrentUrl) {
+                showMessage('请输入Torrent文件URL', 'error');
+                return;
+            }
+            
+            if (!torrentUrl.startsWith('http')) {
+                showMessage('请输入有效的HTTP/HTTPS链接', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        magnet_url: torrentUrl
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('开始下载Torrent文件', 'success');
+                    document.getElementById('torrentUrl').value = '';
+                } else {
+                    showMessage(data.error || '下载失败', 'error');
+                }
+            } catch (error) {
+                console.error('下载错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                uploadTorrentFile(file);
+            }
+        }
+
+        // 上传Torrent文件
+        async function uploadTorrentFile(file) {
+            if (!file.name.endsWith('.torrent')) {
+                showMessage('请选择.torrent文件', 'error');
+                return;
+            }
+            
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.style.display = 'block';
+            
+            const formData = new FormData();
+            formData.append('torrent', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`开始下载: ${file.name}`, 'success');
+                } else {
+                    showMessage(data.error || '上传失败', 'error');
+                }
+            } catch (error) {
+                console.error('上传错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            } finally {
+                uploadStatus.style.display = 'none';
+                document.getElementById('torrentFile').value = '';
+            }
+        }
+
+        // 设置拖拽上传
+        function setupDragAndDrop() {
+            const uploadArea = document.querySelector('.file-upload');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.background = 'rgba(79, 172, 254, 0.15)';
+            });
+            
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.style.background = 'rgba(79, 172, 254, 0.05)';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.background = 'rgba(79, 172, 254, 0.05)';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    uploadTorrentFile(files[0]);
+                }
+            });
+        }
+
+        // 开始状态更新
+        function startStatusUpdates() {
+            updateStatus();
+            updateDownloadingVideos();
+            statusInterval = setInterval(() => {
+                updateStatus();
+                updateDownloadingVideos();
+            }, 2000);
+        }
+
+        // 更新下载状态
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const data = await response.json();
+                
+                const container = document.getElementById('statusContainer');
+                
+                if (data.torrents && data.torrents.length > 0) {
+                    container.innerHTML = '';
+                    
+                    data.torrents.forEach(torrent => {
+                        const torrentDiv = document.createElement('div');
+                        torrentDiv.className = 'torrent-item';
+                        
+                        const progress = Math.min(torrent.progress || 0, 100);
+                        
+                        torrentDiv.innerHTML = `
+                            <div class="torrent-name">${torrent.name || '未知文件'}</div>
+                            <div class="torrent-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                                <div class="progress-text">${progress.toFixed(1)}%</div>
+                            </div>
+                            <div class="torrent-info">
+                                <span>已下载: ${formatBytes(torrent.downloaded || 0)}</span>
+                                <span>总大小: ${formatBytes(torrent.total || 0)}</span>
+                                <span>状态: ${torrent.status || '下载中'}</span>
+                            </div>
+                            <div class="torrent-actions">
+                                <button class="btn btn-small btn-danger" onclick="cancelDownload('${torrent.hash || ''}')">
+                                    取消下载
+                                </button>
+                                <button class="btn btn-small btn-secondary" onclick="removeDownload('${torrent.hash || ''}')">
+                                    移除
+                                </button>
+                            </div>
+                        `;
+                        
+                        container.appendChild(torrentDiv);
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 3em; margin-bottom: 15px;">📥</div>
+                            <p>暂无下载任务</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('获取状态失败:', error);
+            }
+        }
+
+        // 加载文件列表
+        async function loadFiles() {
+            try {
+                const response = await fetch('/files');
+                const data = await response.json();
+                
+                const container = document.getElementById('filesContainer');
+                
+                if (data.files && data.files.length > 0) {
+                    container.innerHTML = '';
+                    
+                    data.files.forEach(file => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'file-item';
+                        
+                        fileDiv.innerHTML = `
+                            <div class="file-info">
+                                <div class="file-name">${file.name}</div>
+                                <div class="file-size">大小: ${formatBytes(file.size)}</div>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn btn-small" onclick="playVideo('${encodeURIComponent(file.path)}')">
+                                    🎬 播放
+                                </button>
+                                <button class="btn btn-small btn-secondary" onclick="downloadFile('${file.path}')">
+                                    📥 下载到本地
+                                </button>
+                                <button class="btn btn-small btn-danger" onclick="deleteFile('${file.path}')">
+                                    🗑️ 删除
+                                </button>
+                            </div>
+                        `;
+                        
+                        container.appendChild(fileDiv);
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 3em; margin-bottom: 15px;">📂</div>
+                            <p>暂无已下载文件</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+            }
+        }
+
+        // 播放视频
+        function playVideo(filePath) {
+            const encodedPath = encodeURIComponent(encodeURIComponent(filePath));
+            window.open(`/static/video_player.html?file=${encodedPath}`, '_blank');
+        }
+
+        // 下载文件到本地
+        function downloadFile(filePath) {
+            const link = document.createElement('a');
+            link.href = `/downloads/${encodeURIComponent(filePath)}`;
+            link.download = filePath.split('/').pop();
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage(`开始下载文件: ${filePath.split('/').pop()}`, 'success');
+        }
+
+        // 删除文件
+        async function deleteFile(filePath) {
+            if (!confirm(`确定要删除文件 "${filePath.split('/').pop()}" 吗？\n\n此操作将同时删除downloads目录下的实际文件，无法恢复！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/delete-file', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        file_path: filePath
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('文件删除成功', 'success');
+                    loadFiles(); // 重新加载文件列表
+                } else {
+                    showMessage(data.error || '删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('删除文件错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 取消下载
+        async function cancelDownload(hash) {
+            if (!hash) return;
+            
+            try {
+                const response = await fetch(`/cancel/${hash}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('下载已取消', 'success');
+                } else {
+                    showMessage(data.error || '取消失败', 'error');
+                }
+            } catch (error) {
+                console.error('取消下载错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 移除下载
+        async function removeDownload(hash) {
+            if (!hash) return;
+            
+            if (!confirm('确定要移除此下载任务吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/remove/${hash}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('下载任务已移除', 'success');
+                } else {
+                    showMessage(data.error || '移除失败', 'error');
+                }
+            } catch (error) {
+                console.error('移除下载错误:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 更新正在下载的视频列表
+        async function updateDownloadingVideos() {
+            try {
+                const response = await fetch('/downloading-videos');
+                const data = await response.json();
+                
+                const container = document.getElementById('downloadingVideosContainer');
+                
+                if (data.downloading_videos && data.downloading_videos.length > 0) {
+                    container.innerHTML = '';
+                    
+                    data.downloading_videos.forEach(video => {
+                        const videoDiv = document.createElement('div');
+                        videoDiv.className = 'torrent-item';
+                        
+                        const progress = Math.min(video.progress || 0, 100);
+                        const playableStatus = video.playable ? '✅ 可播放' : '⏳ 缓冲中';
+                        const playableClass = video.playable ? '' : 'btn-secondary';
+                        
+                        videoDiv.innerHTML = `
+                            <div class="torrent-name">${video.file_name}</div>
+                            <div class="torrent-info" style="margin-bottom: 10px;">
+                                <span>种子: ${video.torrent_name}</span>
+                                <span>状态: ${playableStatus}</span>
+                            </div>
+                            <div class="torrent-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                                <div class="progress-text">${progress.toFixed(1)}%</div>
+                            </div>
+                            <div class="torrent-info">
+                                <span>已下载: ${formatBytes(video.downloaded || 0)}</span>
+                                <span>总大小: ${formatBytes(video.file_size || 0)}</span>
+                            </div>
+                            <div class="torrent-actions">
+                                <button class="btn btn-small ${playableClass}" 
+                                        onclick="playTorrentVideo('${video.hash}', '${encodeURIComponent(video.file_name)}')"
+                                        ${!video.playable ? 'disabled' : ''}>
+                                    🎬 ${video.playable ? '立即播放' : '等待缓冲'}
+                                </button>
+                                <button class="btn btn-small btn-secondary" onclick="showTorrentFiles('${video.hash}')">
+                                    📁 查看文件
+                                </button>
+                            </div>
+                        `;
+                        
+                        container.appendChild(videoDiv);
+                    });
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size: 3em; margin-bottom: 15px;">🎥</div>
+                            <p>暂无正在下载的视频文件</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('获取正在下载的视频失败:', error);
+            }
+        }
+
+        // 播放正在下载的视频
+        function playTorrentVideo(hash, fileName) {
+            const decodedFileName = decodeURIComponent(fileName);
+            const encodedPath = encodeURIComponent(`torrent/${hash}/${fileName}`);
+            window.open(`/static/video_player.html?file=${encodedPath}&title=${encodeURIComponent(decodedFileName)}`, '_blank');
+            showMessage(`开始播放: ${decodedFileName}`, 'success');
+        }
+
+        // 显示torrent文件列表
+        async function showTorrentFiles(hash) {
+            try {
+                const response = await fetch(`/torrent/${hash}/files`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let fileList = `种子文件列表:\n\n`;
+                    data.files.forEach((file, index) => {
+                        const progress = (file.progress || 0).toFixed(1);
+                        const status = file.playable ? '可播放' : '下载中';
+                        const type = file.is_video ? '🎬' : '📄';
+                        fileList += `${index + 1}. ${type} ${file.path}\n`;
+                        fileList += `   大小: ${formatBytes(file.size)}, 进度: ${progress}%, 状态: ${status}\n\n`;
+                    });
+                    
+                    alert(fileList);
+                } else {
+                    showMessage(data.error || '获取文件列表失败', 'error');
+                }
+            } catch (error) {
+                console.error('获取torrent文件列表失败:', error);
+                showMessage('网络错误，请重试', 'error');
+            }
+        }
+
+        // 格式化字节大小
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter 快速下载
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab.textContent.includes('磁力链接')) {
+                    downloadMagnet();
+                } else if (activeTab.textContent.includes('Torrent URL')) {
+                    downloadTorrentUrl();
+                }
+                e.preventDefault();
+            }
+        });
+
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', function() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+        });
+    </script>
+</body>
+</html>
